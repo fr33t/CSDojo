@@ -7,3 +7,6 @@ class User(models.Model):
     nickname = models.CharField(max_length=254, unique=True)
     password_hash = models.CharField(max_length=254)
     totp_uri = models.CharField(max_length=254, unique=True)
+
+    def __str__(self):
+        return f"{self.nickname}"

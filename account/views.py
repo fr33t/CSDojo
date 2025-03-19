@@ -1,6 +1,5 @@
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.db.utils import IntegrityError
 
 from CSDojo.utils import (
@@ -18,7 +17,6 @@ from argon2.exceptions import VerifyMismatchError
 from .models import User
 
 
-@csrf_exempt
 @require_POST
 @require_json_content_type
 @validate_request_data_json_decorator(["email", "password", "nickname"])
@@ -40,7 +38,6 @@ def register(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"totp_uri": new_user.totp_uri})
 
 
-@csrf_exempt
 @require_POST
 @require_json_content_type
 @validate_request_data_json_decorator(["email", "password"])
@@ -62,7 +59,6 @@ def login_with_password(request: HttpRequest):
         return JsonResponse({"message": "邮箱或密码不正确"}, status=400)
 
 
-@csrf_exempt
 @require_POST
 @require_json_content_type
 @validate_request_data_json_decorator(["email", "totp_code"])
@@ -88,7 +84,6 @@ def test_token(request: HttpRequest):
     return JsonResponse({"message": "ok"})
 
 
-@csrf_exempt
 @require_POST
 @require_json_content_type
 @validate_request_data_json_decorator(["email"])
