@@ -18,7 +18,8 @@ from CSDojo.utils import (
 @jwt_required
 def trainings(request: HttpRequest):
     user = User.objects.get(email=request.jdata["email"])
-    ts = Training.objects.filter(user=user, status=1)
+    ts = user.trainings.filter(status=1)
+
     data = [t.to_dict() for t in ts]
     return JsonResponse({"data": data, "code": "200"})
 
@@ -36,7 +37,7 @@ def create(request: HttpRequest):
 
     challenge_data = challenges[0].from_toml()
     # 检验是否已经存在
-    t = Training.objects.filter(user=user, challenge=challenges[0], status=1)
+    t = user.trainings.filter(challenge=challenges[0], status=1)
     if len(t) != 0:
         return JsonResponse({"message": "环境已存在", "code": "301"})
 
@@ -63,7 +64,7 @@ def create(request: HttpRequest):
             },
             cpu_quota=int(challenge_data["cpu_limit"] * 1e5),
             mem_limit=f"{challenge_data['memory_limit']}m",
-            # storage_opt={"size": f"{challenge_data['disk_limit']}m"},
+            # storage_opt={"size": f"{challenge_data['disk_limit']}m"}, XFS overlay2
             privileged=challenge_data["privileged"],
             environment={"FLAG": training.flag},
             detach=True,  # restart
@@ -76,7 +77,6 @@ def create(request: HttpRequest):
     port_bindings = container.attrs["NetworkSettings"]["Ports"]
     # 提取随机端口
     random_port = port_bindings[f"{challenge_data['port']}/tcp"][0]["HostPort"]
-    print(random_port)
     # flag
     training.status = 1
     training.container_id = container.id
@@ -117,7 +117,7 @@ def destroy(request: HttpRequest):
 def submit(request: HttpRequest):
     data = request.vdata
     user = User.objects.get(email=request.jdata["email"])
-    ts = Training.objects.filter(id=data["training_id"], user=user, status=1)
+    ts = user.trainings.filter(id=data["training_id"], status=1)
 
     if len(ts) == 0:
         return JsonResponse({"message": "环境不存在", "code": "404"})
@@ -127,7 +127,7 @@ def submit(request: HttpRequest):
         training_log.submitted_at = timezone.now()
         training_log.submitted_flag = data["flag"]
         training_log.training = training
-        training_log.user = User.objects.get(email=request.jdata["email"])
+        training_log.user = user
 
         if training.flag == training_log.submitted_flag:
             training.stopped_at = timezone.now()

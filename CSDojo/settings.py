@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "account",
     "challenge",
     "training",
+    "competition",
+    "team",
 ]
 
 MIDDLEWARE = [

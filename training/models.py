@@ -19,10 +19,17 @@ class Training(models.Model):
     ]
 
     challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE, verbose_name="题目"
+        Challenge,
+        on_delete=models.CASCADE,
+        verbose_name="题目",
+        related_name="trainings",
     )
+
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="谁开启的题目"
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="谁开启的题目",
+        related_name="trainings",
     )
 
     status = models.IntegerField(choices=STATUS, default=0, verbose_name="题目状态")
@@ -88,8 +95,12 @@ class Training(models.Model):
 class TrainingLog(models.Model):
     """User Attempt"""
 
-    training = models.ForeignKey(Training, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    training = models.ForeignKey(
+        Training, on_delete=models.CASCADE, related_name="training_logs"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="training_logs"
+    )
     submitted_flag = models.CharField(max_length=255, verbose_name="用户提交的FLAG")
     is_correct = models.BooleanField(default=False, verbose_name="提交的是否正确")
     submitted_at = models.DateTimeField(verbose_name="提交时间")
