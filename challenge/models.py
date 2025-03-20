@@ -133,8 +133,6 @@ class Challenge(models.Model):
             data["training_name"] = config["training_name"]
             data["docker_image"] = docker_config["docker_image"]
             data["port"] = docker_config["port"]
-            data["flag_path"] = flag_config["flag_path"]
-            data["flag_search_pattern"] = flag_config["flag_search_pattern"]
             data["static_flag"] = flag_config["static_flag"]
         except KeyError:
             raise

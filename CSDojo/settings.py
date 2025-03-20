@@ -130,3 +130,4 @@ SMTP_ACCOUNT = "freetbash@163.com"
 SMTP_PASSCODE = "RYg8xGMnQ57Ljh6f"
 
 CHALLENGES_DIR = "/var/challenges"
+CUSTOM_URL_PREFIX = "http://127.0.0.1"

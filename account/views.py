@@ -7,7 +7,6 @@ from CSDojo.utils import (
     validate_request_data_json_decorator,
     generate_jwt_token,
     jwt_required,
-    send_email,
 )
 
 import pyotp
@@ -33,9 +32,9 @@ def register(request: HttpRequest) -> JsonResponse:
     try:
         new_user.save()
     except IntegrityError:
-        return JsonResponse({"message": "已被注册"}, status=400)
+        return JsonResponse({"message": "已被注册", "code": "200"})
 
-    return JsonResponse({"totp_uri": new_user.totp_uri})
+    return JsonResponse({"totp_uri": new_user.totp_uri, "code": "200"})
 
 
 @require_POST
@@ -45,7 +44,7 @@ def login_with_password(request: HttpRequest):
     data = request.vdata
     users = User.objects.filter(email=data["email"])
     if len(users) == 0:
-        return JsonResponse({"message": "邮箱或密码不正确"}, status=400)
+        return JsonResponse({"message": "邮箱或密码不正确", "code": "400"})
 
     user = users[0]
 
@@ -53,10 +52,10 @@ def login_with_password(request: HttpRequest):
         ph = PasswordHasher()
         ph.verify(user.password_hash, data["password"])
         token = generate_jwt_token({"email": data["email"]})
-        return JsonResponse({"token": token})
+        return JsonResponse({"token": token, "code": "200"})
 
     except VerifyMismatchError:
-        return JsonResponse({"message": "邮箱或密码不正确"}, status=400)
+        return JsonResponse({"message": "邮箱或密码不正确", "code": "400"})
 
 
 @require_POST
@@ -66,22 +65,22 @@ def login_with_totp_code(request: HttpRequest):
     data = request.vdata
     users = User.objects.filter(email=data["email"])
     if len(users) == 0:
-        return JsonResponse({"message": "邮箱或密码不正确"}, status=400)
+        return JsonResponse({"message": "邮箱或密码不正确", "code": "400"})
 
     user = users[0]
 
     totp = pyotp.parse_uri(user.totp_uri)
     if totp.verify(data["totp_code"]):
         token = generate_jwt_token({"email": data["email"]})
-        return JsonResponse({"token": token})
+        return JsonResponse({"token": token, "code": "200"})
     else:
-        return JsonResponse({"message": "邮箱或代码不正确"}, status=400)
+        return JsonResponse({"message": "邮箱或代码不正确", "code": "400"})
 
 
 @jwt_required
 def test_token(request: HttpRequest):
     print(request.jdata)
-    return JsonResponse({"message": "ok"})
+    return JsonResponse({"message": "ok", "code": "200"})
 
 
 @require_POST
@@ -98,5 +97,8 @@ def recover(request: HttpRequest):
     #         return JsonResponse({"message": "发送失败"}, status=500)
 
     return JsonResponse(
-        {"message": "已发送TOTP二维码到您的邮箱, 若没有， 请检查垃圾箱或稍候重试"}
+        {
+            "message": "已发送TOTP二维码到您的邮箱, 若没有， 请检查垃圾箱或稍候重试",
+            "code": "200",
+        }
     )

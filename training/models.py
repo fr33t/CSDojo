@@ -47,15 +47,15 @@ class Training(models.Model):
     )
     disk_limit = models.PositiveIntegerField(default=256, verbose_name="磁盘空间")
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    created_at = models.DateTimeField(null=True, blank=True, verbose_name="创建时间")
     started_at = models.DateTimeField(null=True, blank=True, verbose_name="启动时间")
+    stopped_at = models.DateTimeField(null=True, blank=True, verbose_name="停止时间")
 
     default_duration = models.PositiveIntegerField(default=3600)
     extend_duration = models.PositiveIntegerField(default=1800)
     extend_count = models.PositiveIntegerField(default=0)
     max_extend_count = models.PositiveIntegerField(default=3)
 
-    stopped_at = models.DateTimeField(null=True, blank=True, verbose_name="停止时间")
     # 启动时 启动一个 timer 时间到期删除docker和 将Training STATUS改为stop
 
     # 计算剩余时间
@@ -74,6 +74,16 @@ class Training(models.Model):
     def __str__(self):
         return f"{self.challenge.title}-{self.user.nickname}"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "challenge": self.challenge.to_dict(),
+            "status": self.status,
+            "pwnd": self.pwnd,
+            "content": self.content,
+            "remaining_time": self.remaining_time / 60,
+        }
+
 
 class TrainingLog(models.Model):
     """User Attempt"""
@@ -82,7 +92,7 @@ class TrainingLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     submitted_flag = models.CharField(max_length=255, verbose_name="用户提交的FLAG")
     is_correct = models.BooleanField(default=False, verbose_name="提交的是否正确")
-    submitted_at = models.DateTimeField(auto_now_add=True, verbose_name="提交时间")
+    submitted_at = models.DateTimeField(verbose_name="提交时间")
 
     def __str__(self):
         return f"{self.training.challenge.title}-{self.user.nickname}"
