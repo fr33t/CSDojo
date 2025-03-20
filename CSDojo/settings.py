@@ -39,13 +39,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "account",
     "challenge",
+    "training",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -107,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "zh-hans"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -128,3 +128,6 @@ JWT_SECRET = "$argon2id$v=19$m=65536,t=3,p=4$wgkwMg/oKqhsYjZK4wl5sw$yDRUfvLW2TFe
 SMTP_SERVER = "smtp.163.com"
 SMTP_ACCOUNT = "freetbash@163.com"
 SMTP_PASSCODE = "RYg8xGMnQ57Ljh6f"
+
+CHALLENGES_DIR = "/var/challenges"
+CUSTOM_URL_PREFIX = "http://127.0.0.1"

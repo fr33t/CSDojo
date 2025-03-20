@@ -5,6 +5,11 @@ import jwt
 import smtplib
 from functools import wraps
 from . import settings
+import datetime
+import uuid
+import docker
+
+docker_client = docker.from_env()
 
 
 def require_json_content_type(view_func):
@@ -59,11 +64,14 @@ def jwt_required(view_func):
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
-            payload = decode_jwt_token(token)
-            if payload:
-                # 将用户信息添加到 request 对象中
-                request.jdata = payload
-                return view_func(request, *args, **kwargs)
+            try:
+                payload = decode_jwt_token(token)
+                if payload:
+                    # 将用户信息添加到 request 对象中
+                    request.jdata = payload
+                    return view_func(request, *args, **kwargs)
+            except jwt.ExpiredSignatureError or Exception:
+                return JsonResponse({"message": "未登录"}, status=401)
 
         # 如果 Token 无效，返回 401 Unauthorized
         return JsonResponse({"message": "未登录"}, status=401)
@@ -71,7 +79,9 @@ def jwt_required(view_func):
     return wrapper
 
 
-def generate_jwt_token(data) -> str:
+def generate_jwt_token(data, expires_in=8 * 60 * 60) -> str:
+    exp_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+    data = {**data, "exp": exp_time}
     return jwt.encode(data, key=settings.JWT_SECRET, algorithm="HS256")
 
 
@@ -99,3 +109,8 @@ def send_email(receiver, subject, msg) -> bool:
     except Exception as e:
         print(e)
         return False
+
+
+def generate_flag() -> str:
+    unique_flag = uuid.uuid4().hex
+    return f"flag{{{unique_flag}}}"
