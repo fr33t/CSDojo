@@ -26,6 +26,7 @@ def create(request: HttpRequest):
     team.name = data["name"]
     team.description = data["description"]
     team.captain = user
+    team.users.add(user)
     try:
         team.save()
     except Exception:
@@ -107,9 +108,8 @@ def handle(request: HttpRequest):
         return JsonResponse({"message": "申请不存在", "code": "404"})
     tr = trs[0]
     if requests.vdata["agree"]:
-        captain_teams = tr.user.captain_team.all()
         member_teams = tr.user.member_teams.all()
-        if len(captain_teams) != 0 or len(member_teams) != 0:
+        if len(member_teams) != 0:
             return JsonResponse({"message": "他已经有队伍了", "code": "400"})
         captain_teams = user.captain_team.all()
         if len(captain_teams) == 0:

@@ -15,7 +15,6 @@ class Team(models.Model):
         blank=True,
     )
     users = models.ManyToManyField(User, related_name="member_teams", blank=True)
-    score = models.FloatField(default=0.0, verbose_name="得分")
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

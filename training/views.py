@@ -35,7 +35,6 @@ def create(request: HttpRequest):
     if len(challenges) == 0:
         return JsonResponse({"message": "题目不存在", "code": "404"})
 
-    challenge_data = challenges[0].from_toml()
     # 检验是否已经存在
     t = user.trainings.filter(challenge=challenges[0], status=1)
     if len(t) != 0:
@@ -48,6 +47,7 @@ def create(request: HttpRequest):
     training.status = 0
     training.save()
 
+    challenge_data = challenges[0].from_toml()
     training.cpu_limit = challenge_data["cpu_limit"]
     training.memory_limit = challenge_data["memory_limit"]
     training.disk_limit = challenge_data["disk_limit"]
