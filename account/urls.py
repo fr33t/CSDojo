@@ -7,4 +7,5 @@ urlpatterns = [
     path("login_tp", views.login_with_totp_code),
     path("test_token", views.test_token),
     path("recover", views.recover),
+    path("profile", views.profile),
 ]

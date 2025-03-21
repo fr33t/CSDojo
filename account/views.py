@@ -1,5 +1,5 @@
 from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.db.utils import IntegrityError
 
 from CSDojo.utils import (
@@ -102,3 +102,26 @@ def recover(request: HttpRequest):
             "code": "200",
         }
     )
+
+
+@require_GET
+@jwt_required
+def profile(request: HttpRequest):
+    user = User.objects.get(email=request.jdata["email"])
+    captain_teams = user.captain_team.all()
+    captain_team = {}
+    if len(captain_teams) != 0:
+        captain_team = {"id": captain_teams[0].id, "name": captain_teams[0].name}
+    member_teams = user.member_teams.all()
+    member_team = {}
+    if len(member_teams) != 0:
+        member_team = {"id": member_teams[0].id, "name": member_teams[0].name}
+
+    data = {
+        "nickname": user.nickname,
+        "email": user.email,
+        "captain_team": captain_team,
+        "member_team": member_team,
+    }
+
+    return JsonResponse({"data": data, "code": "200"})

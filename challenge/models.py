@@ -58,9 +58,16 @@ class Challenge(models.Model):
         choices=DIFFICULTY, default=0, verbose_name="题目难度"
     )
 
-    tags = models.ManyToManyField(Tag, blank=True, verbose_name="标签")
+    tags = models.ManyToManyField(
+        Tag, blank=True, verbose_name="标签", related_name="challenges"
+    )
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="类别"
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="类别",
+        related_name="challenges",
     )
 
     visibility = models.BooleanField(default=False, verbose_name="可见性")
