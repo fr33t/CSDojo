@@ -39,8 +39,9 @@ class ChallengeModelAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         challenge_instance: Challenge = form.instance
         try:
-            challenge_instance.build_image()
-            challenge_instance.image_existed = True
+            if challenge_instance.is_dockerd:
+                challenge_instance.build_image()
+                challenge_instance.image_existed = True
             challenge_instance.save()
         except Exception as e:
             messages.error(request, f"镜像构建或拉取失败{str(e)}")

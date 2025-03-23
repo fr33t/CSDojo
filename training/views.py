@@ -55,32 +55,33 @@ def create(request: HttpRequest):
         training.flag = generate_flag()
     else:
         training.flag = challenge_data["static_flag"]
+    random_port = None
+    if challenges[0].is_dockerd:
+        try:
+            container = docker_client.containers.run(
+                image=challenge_data["docker_image"],
+                ports={
+                    challenge_data["port"]: None,
+                },
+                cpu_quota=int(challenge_data["cpu_limit"] * 1e5),
+                mem_limit=f"{challenge_data['memory_limit']}m",
+                # storage_opt={"size": f"{challenge_data['disk_limit']}m"}, XFS overlay2
+                privileged=challenge_data["privileged"],
+                environment={"FLAG": training.flag},
+                detach=True,  # restart
+            )
+        except Exception as e:
+            print(e)
+            return JsonResponse({"message": "是我们的服务器出问题了！", "code": "500"})
 
-    try:
-        container = docker_client.containers.run(
-            image=challenge_data["docker_image"],
-            ports={
-                challenge_data["port"]: None,
-            },
-            cpu_quota=int(challenge_data["cpu_limit"] * 1e5),
-            mem_limit=f"{challenge_data['memory_limit']}m",
-            # storage_opt={"size": f"{challenge_data['disk_limit']}m"}, XFS overlay2
-            privileged=challenge_data["privileged"],
-            environment={"FLAG": training.flag},
-            detach=True,  # restart
-        )
-    except Exception as e:
-        print(e)
-        return JsonResponse({"message": "是我们的服务器出问题了！", "code": "500"})
+        container.reload()
+        port_bindings = container.attrs["NetworkSettings"]["Ports"]
+        # 提取随机端口
+        random_port = port_bindings[f"{challenge_data['port']}/tcp"][0]["HostPort"]
+        # flag
+        training.container_id = container.id
 
-    container.reload()
-    port_bindings = container.attrs["NetworkSettings"]["Ports"]
-    # 提取随机端口
-    random_port = port_bindings[f"{challenge_data['port']}/tcp"][0]["HostPort"]
-    # flag
-    training.status = 1
-    training.container_id = container.id
-    if training.challenge.category.name == "WEB":
+    if random_port:
         # // challenge.category
         training.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank"">{CUSTOM_URL_PREFIX}:{random_port}</a>'
     training.started_at = timezone.now()
@@ -104,8 +105,9 @@ def destroy(request: HttpRequest):
         training = ts[0]
         training.status = 2
         training.stopped_at = timezone.now()
-        container = docker_client.containers.get(training.container_id)
-        container.remove(force=True)
+        if training.challenge.is_dockerd:
+            container = docker_client.containers.get(training.container_id)
+            container.remove(force=True)
         training.save()
         return JsonResponse({"message": "销毁成功", "code": "200"})
     except Exception:
@@ -139,14 +141,15 @@ def submit(request: HttpRequest):
 
             training_log.is_correct = True
             training_log.save()
+            if training.challenge.is_dockerd:
+                try:
+                    container = docker_client.containers.get(training.container_id)
+                    container.remove(force=True)
+                except Exception:
+                    return JsonResponse(
+                        {"message": "FLAG正确但容器删除失败", "code": "200"}
+                    )
 
-            try:
-                container = docker_client.containers.get(training.container_id)
-                container.remove(force=True)
-            except Exception:
-                return JsonResponse(
-                    {"message": "FLAG正确但容器删除失败", "code": "200"}
-                )
             return JsonResponse({"message": "FLAG正确", "code": "200"})
         else:
             training_log.save()

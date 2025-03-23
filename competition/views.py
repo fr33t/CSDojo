@@ -142,32 +142,32 @@ def create_training(request: HttpRequest):
         ct.flag = generate_flag()
     else:
         ct.flag = challenge_data["static_flag"]
+    random_port = None
+    if challenge.is_dockerd:
+        try:
+            container = docker_client.containers.run(
+                image=challenge_data["docker_image"],
+                ports={
+                    challenge_data["port"]: None,
+                },
+                cpu_quota=int(challenge_data["cpu_limit"] * 1e5),
+                mem_limit=f"{challenge_data['memory_limit']}m",
+                # storage_opt={"size": f"{challenge_data['disk_limit']}m"}, XFS overlay2
+                privileged=challenge_data["privileged"],
+                environment={"FLAG": ct.flag},
+                detach=True,  # restart
+            )
+            container.reload()
+            port_bindings = container.attrs["NetworkSettings"]["Ports"]
+            # 提取随机端口
+            random_port = port_bindings[f"{challenge_data['port']}/tcp"][0]["HostPort"]
+            # flag
+            ct.container_id = container.id
+        except Exception as e:
+            print(e)
+            return JsonResponse({"message": "是我们的服务器出问题了！", "code": "500"})
 
-    try:
-        container = docker_client.containers.run(
-            image=challenge_data["docker_image"],
-            ports={
-                challenge_data["port"]: None,
-            },
-            cpu_quota=int(challenge_data["cpu_limit"] * 1e5),
-            mem_limit=f"{challenge_data['memory_limit']}m",
-            # storage_opt={"size": f"{challenge_data['disk_limit']}m"}, XFS overlay2
-            privileged=challenge_data["privileged"],
-            environment={"FLAG": ct.flag},
-            detach=True,  # restart
-        )
-    except Exception as e:
-        print(e)
-        return JsonResponse({"message": "是我们的服务器出问题了！", "code": "500"})
-
-    container.reload()
-    port_bindings = container.attrs["NetworkSettings"]["Ports"]
-    # 提取随机端口
-    random_port = port_bindings[f"{challenge_data['port']}/tcp"][0]["HostPort"]
-    # flag
-    ct.status = 1
-    ct.container_id = container.id
-    if challenge.category.name == "WEB":
+    if random_port:
         # // challenge.category
         ct.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank">{CUSTOM_URL_PREFIX}:{random_port}</a>'
     ct.started_at = timezone.now()
@@ -194,8 +194,9 @@ def destroy_training(request: HttpRequest):
         competition_training = ct[0]
         competition_training.status = 2
         competition_training.stopped_at = timezone.now()
-        container = docker_client.containers.get(competition_training.container_id)
-        container.remove(force=True)
+        if competition_training.challenge.is_dockerd:
+            container = docker_client.containers.get(competition_training.container_id)
+            container.remove(force=True)
         competition_training.save()
         return JsonResponse({"message": "销毁成功", "code": "200"})
     except Exception:
@@ -275,16 +276,16 @@ def submit(request: HttpRequest):
 
             competition_challenge_pwnd.save()
             competition_announcement.save()
-
-            try:
-                container = docker_client.containers.get(
-                    competition_training.container_id
-                )
-                container.remove(force=True)
-            except Exception:
-                return JsonResponse(
-                    {"message": "FLAG正确但容器删除失败", "code": "501"}
-                )
+            if competition_training.challenge.is_dockerd:
+                try:
+                    container = docker_client.containers.get(
+                        competition_training.container_id
+                    )
+                    container.remove(force=True)
+                except Exception:
+                    return JsonResponse(
+                        {"message": "FLAG正确但容器删除失败", "code": "501"}
+                    )
 
             return JsonResponse({"message": "FLAG正确", "code": "200"})
         else:

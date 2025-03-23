@@ -48,10 +48,13 @@ class Challenge(models.Model):
     related_url = models.CharField(
         max_length=300, verbose_name="相关链接", blank=True, null=True
     )
-
+    is_dockerd = models.BooleanField(default=True, verbose_name="是否需要docker运行")
     # toml
     config_dir = models.CharField(
-        max_length=300, verbose_name="启动文件具体位置 /var/challenges/ "
+        max_length=300,
+        verbose_name="启动文件具体位置 /var/challenges/ ",
+        null=True,
+        blank=True,
     )
 
     difficulty = models.IntegerField(

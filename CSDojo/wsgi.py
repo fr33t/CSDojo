@@ -33,8 +33,9 @@ def clean_outdate_trainings():
         if training.remaining_time <= 0:
             training.status = 2
             training.stopped_at = timezone.now()
-            container = docker_client.containers.get(training.container_id)
-            container.remove(force=True)
+            if training.challenge.is_dockerd:
+                container = docker_client.containers.get(training.container_id)
+                container.remove(force=True)
             training.save()
             print(f"Training: 销毁 {str(training)}")
 
@@ -55,10 +56,11 @@ def clean_outdate_competition():
 
                 competition_training.status = 2
                 competition_training.stopped_at = timezone.now()
-                container = docker_client.containers.get(
-                    competition_training.container_id
-                )
-                container.remove(force=True)
+                if competition_training.challenge.is_dockerd:
+                    container = docker_client.containers.get(
+                        competition_training.container_id
+                    )
+                    container.remove(force=True)
                 competition_training.save()
                 print(f"Competition Training: 销毁 {str(competition_training)}")
 
@@ -81,8 +83,11 @@ def end_competition(competition: Competition):
         for competition_training in competition_trainings:
             competition_training.status = 2
             competition_training.stopped_at = timezone.now()
-            container = docker_client.containers.get(competition_training.container_id)
-            container.remove(force=True)
+            if competition_training.challenge.is_dockerd:
+                container = docker_client.containers.get(
+                    competition_training.container_id
+                )
+                container.remove(force=True)
             competition_training.save()
             print(f"Competition End Training: 销毁 {str(competition_training)}")
     except Exception as e:
