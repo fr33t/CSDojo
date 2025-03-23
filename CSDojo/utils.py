@@ -71,10 +71,10 @@ def jwt_required(view_func):
                     request.jdata = payload
                     return view_func(request, *args, **kwargs)
             except jwt.ExpiredSignatureError or Exception:
-                return JsonResponse({"message": "未登录"}, status=401)
+                return JsonResponse({"message": "未登录", "code": "401"})
 
         # 如果 Token 无效，返回 401 Unauthorized
-        return JsonResponse({"message": "未登录"}, status=401)
+        return JsonResponse({"message": "未登录", "code": "401"})
 
     return wrapper
 

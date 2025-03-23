@@ -80,7 +80,9 @@ def create(request: HttpRequest):
     # flag
     training.status = 1
     training.container_id = container.id
-    training.content = f"{CUSTOM_URL_PREFIX}:{random_port}/"
+    if training.challenge.category.name == "WEB":
+        # // challenge.category
+        training.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank"">{CUSTOM_URL_PREFIX}:{random_port}</a>'
     training.started_at = timezone.now()
     training.status = 1
     training.save()
@@ -143,7 +145,7 @@ def submit(request: HttpRequest):
                 container.remove(force=True)
             except Exception:
                 return JsonResponse(
-                    {"message": "FLAG正确但容器删除失败", "code": "501"}
+                    {"message": "FLAG正确但容器删除失败", "code": "200"}
                 )
             return JsonResponse({"message": "FLAG正确", "code": "200"})
         else:
@@ -179,3 +181,21 @@ def extend_time(request: HttpRequest):
     training.save()
 
     return JsonResponse({"message": "延长成功", "code": "200"})
+
+
+@require_GET
+@jwt_required
+def detail(request: HttpRequest, challenge_id):
+    user = User.objects.get(email=request.jdata["email"])
+    challenges = Challenge.objects.filter(id=challenge_id)
+    if len(challenges) == 0:
+        return JsonResponse({"message": "题目不存在", "code": "404"})
+    challenge = challenges[0]
+
+    trainings = challenge.trainings.filter(user=user, status=1)
+    if len(trainings) == 0:
+        return JsonResponse({"message": "环境未开启", "code": "400"})
+
+    data = trainings[0].to_dict()
+
+    return JsonResponse({"data": data, "code": "200"})

@@ -167,7 +167,9 @@ def create_training(request: HttpRequest):
     # flag
     ct.status = 1
     ct.container_id = container.id
-    ct.content = f"{CUSTOM_URL_PREFIX}:{random_port}/"
+    if challenge.category.name == "WEB":
+        # // challenge.category
+        ct.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank">{CUSTOM_URL_PREFIX}:{random_port}</a>'
     ct.started_at = timezone.now()
     ct.status = 1
     ct.save()

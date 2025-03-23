@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "account",
     "challenge",
     "competition",
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -133,3 +135,13 @@ SMTP_PASSCODE = "RYg8xGMnQ57Ljh6f"
 
 CHALLENGES_DIR = "/var/challenges"
 CUSTOM_URL_PREFIX = "http://127.0.0.1"
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # 允许的前端域名
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+]

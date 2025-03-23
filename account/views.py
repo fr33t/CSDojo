@@ -77,12 +77,6 @@ def login_with_totp_code(request: HttpRequest):
         return JsonResponse({"message": "邮箱或代码不正确", "code": "400"})
 
 
-@jwt_required
-def test_token(request: HttpRequest):
-    print(request.jdata)
-    return JsonResponse({"message": "ok", "code": "200"})
-
-
 @require_POST
 @require_json_content_type
 @validate_request_data_json_decorator(["email"])
@@ -116,12 +110,22 @@ def profile(request: HttpRequest):
     member_team = {}
     if len(member_teams) != 0:
         member_team = {"id": member_teams[0].id, "name": member_teams[0].name}
+    pwnd_trainings = user.trainings.filter(pwnd=True)
 
+    unique_challenge_trainings = []
+    challenge_ids = set()  # 用于记录已经处理过的 challenge id
+    for training in pwnd_trainings:
+        if training.challenge.id not in challenge_ids:
+            unique_challenge_trainings.append(training)
+            challenge_ids.add(training.challenge.id)
+    challenge_ids = list(challenge_ids)
     data = {
         "nickname": user.nickname,
         "email": user.email,
         "captain_team": captain_team,
         "member_team": member_team,
+        "pwnd_challenges": challenge_ids,
+        "pwnd_challenges_count": len(challenge_ids),
     }
 
     return JsonResponse({"data": data, "code": "200"})

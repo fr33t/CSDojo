@@ -7,4 +7,5 @@ urlpatterns = [
     path("destroy", views.destroy),
     path("submit", views.submit),
     path("extend_time", views.extend_time),
+    path("detail/<challenge_id>", views.detail),
 ]

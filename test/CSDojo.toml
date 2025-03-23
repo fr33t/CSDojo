@@ -1,0 +1,13 @@
+training_name = "test_CSDojo"
+
+[docker]
+docker_image = "test_csdojo:latest" # docker image name 
+cpu_limit = 1                       # Core
+memory_limit = 64                   # MB
+disk_limit = 256                    # MB
+privileged = false
+port = 80
+
+[flag]
+is_dynamic = true
+static_flag = "flag{This_is_a_static_flag}"         # static

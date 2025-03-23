@@ -88,7 +88,7 @@ class Training(models.Model):
             "status": self.status,
             "pwnd": self.pwnd,
             "content": self.content,
-            "remaining_time": self.remaining_time / 60,
+            "remaining_time": self.remaining_time,
         }
 
 
