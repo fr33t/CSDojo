@@ -58,7 +58,6 @@ def detail(request: HttpRequest, challenge_id):
 
 
 @require_GET
-@jwt_required
 def top10(request: HttpRequest):
     users = User.objects.all()
     data = []
