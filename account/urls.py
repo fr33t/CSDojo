@@ -1,10 +1,12 @@
 from django.urls import path
-from . import views
+from account.views import manage, auth, profile
 
 urlpatterns = [
-    path("register", views.register),
-    path("login_pw", views.login_with_password),
-    path("login_tp", views.login_with_totp_code),
-    path("recover", views.recover),
-    path("profile", views.profile),
+    path("register", manage.register, name="注册"),
+    path("recover", manage.recover, name="找回"),
+    #
+    path("login_pw", auth.login_with_password, name="密码登录"),
+    path("login_tp", auth.login_with_totp_code, name="TOTP登录"),
+    #
+    path("profile", profile.profile, name="个人资料"),
 ]

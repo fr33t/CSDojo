@@ -1,11 +1,12 @@
 from django.urls import path
-from . import views
+from team.views import manage, details
 
 urlpatterns = [
-    path("create", views.create),
-    path("quit", views.quit),
-    path("teams", views.teams),
-    path("join", views.join),
-    path("requests", views.requests),
-    path("handle", views.handle),
+    path("teams", details.teams, name="都有哪些队伍"),
+    path("requests", details.requests, name="入队请求"),
+    #
+    path("quit", manage.quit, name="退出或解散队伍"),
+    path("join", manage.join, name="申请加入队伍"),
+    path("create", manage.create, name="创建队伍"),
+    path("handle", manage.handle, name="处理入队请求"),
 ]

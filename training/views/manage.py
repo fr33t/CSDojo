@@ -1,27 +1,5 @@
-from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
-from django.utils import timezone
-from challenge.models import Challenge
-from .models import Training, TrainingLog
-from account.models import User
-from CSDojo.settings import CUSTOM_IP_PREFIX
-from CSDojo.utils import (
-    require_json_content_type,
-    validate_request_data_json_decorator,
-    jwt_required,
-    generate_flag,
-    docker_client,
-)
-
-
-@require_GET
-@jwt_required
-def trainings(request: HttpRequest):
-    user = User.objects.get(email=request.jdata["email"])
-    ts = user.trainings.filter(status=1)
-
-    data = [t.to_dict() for t in ts]
-    return JsonResponse({"data": data, "code": "200"})
+# ruff: noqa: F401, F403, F405
+from . import *
 
 
 @require_POST
@@ -29,6 +7,7 @@ def trainings(request: HttpRequest):
 @require_json_content_type
 @validate_request_data_json_decorator(required_fields=["challenge_id"])
 def create(request: HttpRequest):
+    """创建题目环境"""
     data = request.vdata
     challenges = Challenge.objects.filter(id=data["challenge_id"])
     user = User.objects.get(email=request.jdata["email"])
@@ -99,6 +78,7 @@ def create(request: HttpRequest):
 @require_json_content_type
 @validate_request_data_json_decorator(required_fields=["training_id"])
 def destroy(request: HttpRequest):
+    """销毁题目环境"""
     data = request.vdata
     ts = Training.objects.filter(id=data["training_id"])
     if len(ts) == 0:
@@ -116,11 +96,40 @@ def destroy(request: HttpRequest):
         return JsonResponse({"message": "容器不存在", "code": "404"})
 
 
+# extend time
+@require_POST
+@jwt_required
+@require_json_content_type
+@validate_request_data_json_decorator(required_fields=["training_id"])
+def extend_time(request: HttpRequest):
+    """增加环境时间， flag过期"""
+    data = request.vdata
+    ts = Training.objects.filter(id=data["training_id"])
+    if len(ts) == 0:
+        return JsonResponse({"message": "环境不存在", "code": "404"})
+
+    training = ts[0]
+
+    if not training.can_extend:
+        return JsonResponse(
+            {
+                "message": f"当时间小于30分钟可延长， 最大可延长{training.max_extend_count}次",
+                "code": "400",
+            }
+        )
+
+    training.extend_count += 1
+    training.save()
+
+    return JsonResponse({"message": "延长成功", "code": "200"})
+
+
 @require_POST
 @jwt_required
 @require_json_content_type
 @validate_request_data_json_decorator(required_fields=["training_id", "flag"])
 def submit(request: HttpRequest):
+    """提交flag"""
     data = request.vdata
     user = User.objects.get(email=request.jdata["email"])
     ts = user.trainings.filter(id=data["training_id"], status=1)
@@ -159,48 +168,3 @@ def submit(request: HttpRequest):
 
     except Exception:
         return JsonResponse({"message": "容器不存在", "code": "404"})
-
-
-# extend time
-@require_POST
-@jwt_required
-@require_json_content_type
-@validate_request_data_json_decorator(required_fields=["training_id"])
-def extend_time(request: HttpRequest):
-    data = request.vdata
-    ts = Training.objects.filter(id=data["training_id"])
-    if len(ts) == 0:
-        return JsonResponse({"message": "环境不存在", "code": "404"})
-
-    training = ts[0]
-
-    if not training.can_extend:
-        return JsonResponse(
-            {
-                "message": f"当时间小于30分钟可延长， 最大可延长{training.max_extend_count}次",
-                "code": "400",
-            }
-        )
-
-    training.extend_count += 1
-    training.save()
-
-    return JsonResponse({"message": "延长成功", "code": "200"})
-
-
-@require_GET
-@jwt_required
-def detail(request: HttpRequest, challenge_id):
-    user = User.objects.get(email=request.jdata["email"])
-    challenges = Challenge.objects.filter(id=challenge_id)
-    if len(challenges) == 0:
-        return JsonResponse({"message": "题目不存在", "code": "404"})
-    challenge = challenges[0]
-
-    trainings = challenge.trainings.filter(user=user, status=1)
-    if len(trainings) == 0:
-        return JsonResponse({"message": "环境未开启", "code": "400"})
-
-    data = trainings[0].to_dict()
-
-    return JsonResponse({"data": data, "code": "200"})

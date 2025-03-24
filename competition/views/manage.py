@@ -1,95 +1,5 @@
-from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
-from django.utils import timezone
-from .models import (
-    Competition,
-    CompetitionTraining,
-    CompetitionTrainingLog,
-    CompetitionAnnouncement,
-    CompetitionChallengePwnd,
-    get_score,
-)
-from account.models import User
-from challenge.models import Challenge
-
-from CSDojo.settings import CUSTOM_IP_PREFIX
-
-# Create your views here.
-from CSDojo.utils import (
-    require_json_content_type,
-    jwt_required,
-    validate_request_data_json_decorator,
-    generate_flag,
-    docker_client,
-)
-
-
-# all competitions
-@require_GET
-@jwt_required
-def competitions(request: HttpRequest):
-    data = [competition.to_dict() for competition in Competition.objects.all()]
-    return JsonResponse({"data": data, "code": "200"})
-
-
-@require_GET
-@jwt_required
-def joined(request: HttpRequest):
-    # user and team
-    user = User.objects.get(email=request.jdata["email"])
-
-    member_teams = user.member_teams.all()
-    team_competitions = set()
-    if len(member_teams) != 0:
-        mt = member_teams[0]
-        team_competitions.add(mt.competitions.exclude(status=2))
-
-    individual_competitions = user.competitions.exclude(status=2)
-
-    individual_competitions_data = [
-        individual_competition.to_dict()
-        for individual_competition in individual_competitions
-    ]
-    team_competitions_data = []
-    for team_competition in team_competitions:
-        for i in team_competition:
-            team_competitions_data.append(i.to_dict())
-
-    return JsonResponse(
-        {
-            "data": {
-                "individual_competitions": individual_competitions_data,
-                "team_competitions": team_competitions_data,
-            },
-            "code": "200",
-        }
-    )
-
-
-@require_GET
-@jwt_required
-def challenges(request: HttpRequest, competition_id):
-    competitions = Competition.objects.filter(id=competition_id, status=1)
-    if len(competitions) == 0:
-        return JsonResponse({"message": "比赛不存在", "code": "400"})
-
-    competition = competitions[0]
-    data = [challenge.to_dict() for challenge in competition.challenges.all()]
-    return JsonResponse({"data": data, "code": "200"})
-
-
-@require_GET
-@jwt_required
-def trainings(request: HttpRequest, competition_id):
-    competitions = Competition.objects.filter(id=competition_id, status=1)
-    if len(competitions) == 0:
-        return JsonResponse({"message": "比赛不存在", "code": "400"})
-    competition = competitions[0]
-
-    cts = CompetitionTraining.objects.filter(competition=competition, status=1)
-
-    data = [ct.to_dict() for ct in cts]
-    return JsonResponse({"data": data, "code": "200"})
+# ruff: noqa: F401, F403, F405
+from . import *
 
 
 @require_POST
@@ -99,6 +9,7 @@ def trainings(request: HttpRequest, competition_id):
     required_fields=["competition_id", "challenge_id"]
 )
 def create_training(request: HttpRequest):
+    """创建比赛里某个题的环境"""
     data = request.vdata
 
     challenges = Challenge.objects.filter(id=data["challenge_id"])
@@ -185,6 +96,7 @@ def create_training(request: HttpRequest):
 @require_json_content_type
 @validate_request_data_json_decorator(required_fields=["competition_training_id"])
 def destroy_training(request: HttpRequest):
+    """销毁比赛里某个题目的环境"""
     data = request.vdata
     ct = CompetitionTraining.objects.filter(
         id=data["competition_training_id"], status=1
@@ -212,6 +124,7 @@ def destroy_training(request: HttpRequest):
     required_fields=["competition_training_id", "flag"]
 )  # wp
 def submit(request: HttpRequest):
+    """提交flag"""
     data = request.vdata
     user = User.objects.get(email=request.jdata["email"])
     ct = CompetitionTraining.objects.filter(

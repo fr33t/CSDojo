@@ -1,17 +1,11 @@
-from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_GET
-from account.models import User
-
-from CSDojo.utils import (
-    jwt_required,
-)
-
-from .models import Challenge, Tag, Category
+# ruff: noqa: F403, F401, F405
+from . import *
 
 
 @require_GET
 @jwt_required
 def challenges(request: HttpRequest):
+    """所有题目"""
     user = User.objects.get(email=request.jdata["email"])
     data = []
     for challenge in Challenge.objects.filter(visibility=True):
@@ -27,26 +21,14 @@ def challenges(request: HttpRequest):
 
 @require_GET
 @jwt_required
-def tags(request: HttpRequest):
-    data = [str(tag) for tag in Tag.objects.all()]
-    return JsonResponse({"data": data, "code": "200"})
-
-
-@require_GET
-@jwt_required
-def categories(request: HttpRequest):
-    data = [str(category) for category in Category.objects.all()]
-    return JsonResponse({"data": data, "code": "200"})
-
-
-@require_GET
-@jwt_required
 def detail(request: HttpRequest, challenge_id):
+    """某个题目的信息"""
     challenges = Challenge.objects.filter(id=challenge_id)
     if len(challenges) == 0:
         return JsonResponse({"message": "题目不存在", "code": "404"})
     challenge = challenges[0]
     data = challenge.to_dict()
+    # 是否已经解出了
     has_pwnd = False
     user = User.objects.get(email=request.jdata["email"])
     trainings = challenge.trainings.filter(user=user, pwnd=True)
@@ -59,6 +41,7 @@ def detail(request: HttpRequest, challenge_id):
 
 @require_GET
 def top10(request: HttpRequest):
+    """解题数前10名"""
     users = User.objects.all()
     data = []
     for user in users:

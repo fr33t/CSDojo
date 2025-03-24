@@ -1,10 +1,11 @@
 from django.urls import path
-from . import views
+from challenge.views import classify, details
 
 urlpatterns = [
-    path("challenges", views.challenges),
-    path("tags", views.tags),
-    path("categories", views.categories),
-    path("detail/<challenge_id>", views.detail),
-    path("top10", views.top10),
+    path("top10", details.top10, name="解题前十"),
+    path("challenges", details.challenges, name="所有题目"),
+    path("detail/<challenge_id>", details.detail, name="单个题目信息"),
+    #
+    path("tags", classify.tags, name="所有标签"),
+    path("categories", classify.categories, name="所有类别"),
 ]
