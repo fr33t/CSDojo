@@ -12,7 +12,7 @@ from .models import (
 from account.models import User
 from challenge.models import Challenge
 
-from CSDojo.settings import CUSTOM_URL_PREFIX
+from CSDojo.settings import CUSTOM_IP_PREFIX
 
 # Create your views here.
 from CSDojo.utils import (
@@ -167,9 +167,11 @@ def create_training(request: HttpRequest):
             print(e)
             return JsonResponse({"message": "是我们的服务器出问题了！", "code": "500"})
 
-    if random_port:
+    if challenge["is_nc"]:
+        ct.content = f"nc {CUSTOM_IP_PREFIX} {random_port}"
+    elif random_port:
         # // challenge.category
-        ct.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank">{CUSTOM_URL_PREFIX}:{random_port}</a>'
+        ct.content = f'<a class="underline-offset-4 hover:underline" href="http://{CUSTOM_IP_PREFIX}:{random_port}" target="_blank">http://{CUSTOM_IP_PREFIX}:{random_port}</a>'
     ct.started_at = timezone.now()
     ct.status = 1
     ct.save()

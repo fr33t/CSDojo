@@ -4,7 +4,7 @@ from django.utils import timezone
 from challenge.models import Challenge
 from .models import Training, TrainingLog
 from account.models import User
-from CSDojo.settings import CUSTOM_URL_PREFIX
+from CSDojo.settings import CUSTOM_IP_PREFIX
 from CSDojo.utils import (
     require_json_content_type,
     validate_request_data_json_decorator,
@@ -81,9 +81,11 @@ def create(request: HttpRequest):
         # flag
         training.container_id = container.id
 
-    if random_port:
+    if challenge_data["is_nc"]:
+        training.content = f"nc {CUSTOM_IP_PREFIX} {random_port} "
+    elif random_port:
         # // challenge.category
-        training.content = f'<a class="underline-offset-4 hover:underline" href="{CUSTOM_URL_PREFIX}:{random_port}" target="_blank"">{CUSTOM_URL_PREFIX}:{random_port}</a>'
+        training.content = f'<a class="underline-offset-4 hover:underline" href="http://{CUSTOM_IP_PREFIX}:{random_port}" target="_blank"">http://{CUSTOM_IP_PREFIX}:{random_port}</a>'
     training.started_at = timezone.now()
     training.status = 1
     training.save()

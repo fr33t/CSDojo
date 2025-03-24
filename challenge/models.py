@@ -144,6 +144,7 @@ class Challenge(models.Model):
             data["docker_image"] = docker_config["docker_image"]
             data["port"] = docker_config["port"]
             data["static_flag"] = flag_config["static_flag"]
+            data["is_nc"] = flag_config["is_nc"]
         except KeyError:
             raise
         data["cpu_limit"] = docker_config.get("cpu_limit", 1)
